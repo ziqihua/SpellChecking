@@ -3,27 +3,16 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class SpellChecker {
-    private static WordRecommender wordRecommender;
-    private static ArrayList<String> wordSuggest;
-    private static ArrayList<Integer> wordSuggestNumber;
     private static Scanner scnr = new Scanner(System.in);
-    private static Scanner filescnr;
-    private static Scanner scnDict; //scan the word in the dictionary
-    private static boolean validInput = false;
-    private static boolean correctKey;
-    private static String userDictInput;
-    private static String userFileName;
-    private static String outputFileName;
-    private static FileInputStream userDict;
     private static FileInputStream userFile;
-    private static FileInputStream providedDict;
-    private static ArrayList<String> copiedDict;
     private static FileOutputStream checkedOutput;
     private static PrintWriter outWriter;
     private static String dictName;
-    private static int tolerance = 2;
-    private static double commonPercent  = 0.5;
-    private static int topN = 4;
+    private static boolean correctKey;
+    private static ArrayList<String> copiedDict = new ArrayList<>();
+    private static final int tolerance = 2;
+    private static final double commonPercent  = 0.5;
+    private static final int topN = 4;
 
     public SpellChecker() {
         // TODO: You can modify the body of this constructor,
@@ -32,36 +21,43 @@ public class SpellChecker {
 
     public static void start() {
         openDict();
-        copyDict(dictName);
         openFile();
-        filescnr = new Scanner(userFile);
-        while (filescnr.hasNext()) {
-            String wordInFile = filescnr.next();
-            if (inDictionary(wordInFile)) {
-                outWriter.print(wordInFile + " ");
-            } else {
-                System.out.printf(Util.MISSPELL_NOTIFICATION, wordInFile);
-                wordRecommender = new WordRecommender(dictName);
-                wordSuggest = wordRecommender.getWordSuggestions(wordInFile, tolerance,commonPercent,topN);
-                prompt(wordSuggest);
-                correctKey = false;
-                while (!correctKey) {
-                    modifyWord(wordInFile);
+        Scanner fileScnr = new Scanner(userFile);
+        while (fileScnr.hasNextLine()) {
+            Scanner lineScanner = new Scanner(fileScnr.nextLine());
+            while (lineScanner.hasNext()) {
+                String wordInFile = lineScanner.next();
+                if (inDictionary(wordInFile)) {
+                    outWriter.print(wordInFile + " ");
+                } else {
+                    System.out.printf(Util.MISSPELL_NOTIFICATION, wordInFile);
+                    WordRecommender wordRecommender = new WordRecommender(dictName);
+                    ArrayList<String> wordSuggest = wordRecommender.getWordSuggestions(wordInFile, tolerance, commonPercent, topN);
+                    prompt(wordSuggest);
+                    correctKey = false;
+                    while (!correctKey) {
+                        modifyWord(wordInFile, wordSuggest);
+                    }
                 }
             }
+            outWriter.println();
         }
-        closeFile();
+        fileScnr.close();
+        outWriter.close();
     }
 
     public static void openDict () {
+        boolean validInput = false;
         do {
-            System.out.println(Util.DICTIONARY_PROMPT);
-            userDictInput = scnr.next();
+            System.out.printf(Util.DICTIONARY_PROMPT);
+            String userDictInput = scnr.next();
             try {
-                userDict= new FileInputStream(userDictInput);
+                FileInputStream userDict= new FileInputStream(userDictInput);
+                Scanner scnDict = new Scanner(userDict).useDelimiter("\n");
+                copyDict(scnDict);
                 validInput = true;
             } catch (IOException e) {
-                System.out.println(Util.FILE_OPENING_ERROR);
+                System.out.printf(Util.FILE_OPENING_ERROR);
                 validInput = false;
             } finally {
                 dictName = userDictInput;
@@ -71,40 +67,35 @@ public class SpellChecker {
     }
 
     public static void openFile () {
+        boolean validInput = false;
+        String userFileInput;
         do {
-            System.out.println(Util.FILENAME_PROMPT);
-            String userFileInput = scnr.next();
+            System.out.printf(Util.FILENAME_PROMPT);
+            userFileInput = scnr.next();
             try {
                 userFile= new FileInputStream(userFileInput);
                 validInput = true;
             } catch (IOException e) {
-                System.out.println(Util.FILE_OPENING_ERROR);
+                System.out.printf(Util.FILE_OPENING_ERROR);
                 validInput = false;
-            } finally {
-                userFileName = userFileInput;
             }
         } while (!validInput);
 
-        outputFileName = userFileName + "_chk.txt";
+        String outputFileName = userFileInput.substring(0,userFileInput.length()-4) + "_chk.txt";
+
         try {
             checkedOutput = new FileOutputStream(outputFileName);
         } catch (IOException e) {
-            System.out.println("Error creating checkedOutput file: " + e.getMessage());
+            System.out.printf("Error creating checkedOutput file: " + e.getMessage());
         }
+
         outWriter = new PrintWriter(checkedOutput);
-        System.out.printf(Util.FILE_SUCCESS_NOTIFICATION, userFileName, outputFileName);
+        System.out.printf(Util.FILE_SUCCESS_NOTIFICATION, userFileInput, outputFileName);
     }
 
-    public static void copyDict (String file) {
-        copiedDict = new ArrayList<String>();
-        try {
-            providedDict = new FileInputStream(file);
-        } catch (IOException e) {
-            System.out.println("Error copying dictionary.");
-        }
-        scnDict = new Scanner(providedDict).useDelimiter("\n");
-        while (scnDict.hasNext()) {
-            copiedDict.add(scnDict.next().trim());
+    public static void copyDict(Scanner scn) {
+        while (scn.hasNext()) {
+            copiedDict.add(scn.next().trim());
         }
     }
 
@@ -113,13 +104,11 @@ public class SpellChecker {
     }
 
     public static void prompt (ArrayList<String> list) {
-        wordSuggestNumber = new ArrayList<Integer>();
         int len = list.size();
         if (len > 0) {
-            System.out.println(Util.FOLLOWING_SUGGESTIONS);
+            System.out.printf(Util.FOLLOWING_SUGGESTIONS);
             for (int i = 0; i < len; i++) {
                 System.out.printf(Util.SUGGESTION_ENTRY, i+1, list.get(i));
-                wordSuggestNumber.add(i+1);
             }System.out.printf(Util.THREE_OPTION_PROMPT);
         } else {
             System.out.printf(Util.NO_SUGGESTIONS);
@@ -127,19 +116,19 @@ public class SpellChecker {
         }
     }
 
-    public static void modifyWord (String word) {
+    public static void modifyWord (String word, ArrayList<String> wordSuggest) {
         String userInputKey = scnr.next();
         if (userInputKey.equals("r")) {
             System.out.printf(Util.AUTOMATIC_REPLACEMENT_PROMPT);
             boolean correctNum = false;
             while (!correctNum) {
                 int userChoice = scnr.nextInt();
-                if (wordSuggestNumber.contains(userChoice)) {
+                if (userChoice <= wordSuggest.size()) {
                     outWriter.print(wordSuggest.get(userChoice-1) + " ");
                     correctNum = true;
                     correctKey = true;
                 } else {
-                    System.out.println(Util.INVALID_RESPONSE);
+                    System.out.printf(Util.INVALID_RESPONSE);
                 }}
         } else if (userInputKey.equals("a")) {
             outWriter.print(word + " ");
@@ -152,11 +141,5 @@ public class SpellChecker {
         } else {
             System.out.printf(Util.INVALID_RESPONSE);
         }
-    }
-
-    public static void closeFile() {
-        filescnr.close();
-        scnDict.close();
-        outWriter.close();
     }
 }
