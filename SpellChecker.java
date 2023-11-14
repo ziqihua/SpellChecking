@@ -21,6 +21,7 @@ public class SpellChecker {
 
     public static void start() {
         openDict();
+        copyDict();
         openFile();
         Scanner fileScnr = new Scanner(userFile);
         while (fileScnr.hasNextLine()) {
@@ -53,8 +54,6 @@ public class SpellChecker {
             String userDictInput = scnr.next();
             try {
                 FileInputStream userDict= new FileInputStream(userDictInput);
-                Scanner scnDict = new Scanner(userDict).useDelimiter("\n");
-                copyDict(scnDict);
                 validInput = true;
             } catch (IOException e) {
                 System.out.printf(Util.FILE_OPENING_ERROR);
@@ -93,9 +92,10 @@ public class SpellChecker {
         System.out.printf(Util.FILE_SUCCESS_NOTIFICATION, userFileInput, outputFileName);
     }
 
-    public static void copyDict(Scanner scn) {
-        while (scn.hasNext()) {
-            copiedDict.add(scn.next().trim());
+    public static void copyDict() {
+        Scanner scnDict = new Scanner(dictName).useDelimiter("\n");
+        while (scnDict.hasNext()) {
+            copiedDict.add(scnDict.next().trim());
         }
     }
 
