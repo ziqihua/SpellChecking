@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 public class SpellChecker {
     private static Scanner scnr = new Scanner(System.in);
+    private static FileInputStream userDict;
     private static FileInputStream userFile;
     private static FileOutputStream checkedOutput;
     private static PrintWriter outWriter;
@@ -47,13 +48,13 @@ public class SpellChecker {
         outWriter.close();
     }
 
-    public static void openDict () {
+    private static void openDict () {
         boolean validInput = false;
         do {
             System.out.printf(Util.DICTIONARY_PROMPT);
             String userDictInput = scnr.next();
             try {
-                FileInputStream userDict= new FileInputStream(userDictInput);
+                userDict= new FileInputStream(userDictInput);
                 validInput = true;
             } catch (IOException e) {
                 System.out.printf(Util.FILE_OPENING_ERROR);
@@ -65,7 +66,7 @@ public class SpellChecker {
         System.out.printf(Util.DICTIONARY_SUCCESS_NOTIFICATION, dictName);
     }
 
-    public static void openFile () {
+    private static void openFile () {
         boolean validInput = false;
         String userFileInput;
         do {
@@ -93,7 +94,7 @@ public class SpellChecker {
     }
 
     public static void copyDict() {
-        Scanner scnDict = new Scanner(dictName).useDelimiter("\n");
+        Scanner scnDict = new Scanner(userDict).useDelimiter("\n");
         while (scnDict.hasNext()) {
             copiedDict.add(scnDict.next().trim());
         }
@@ -103,7 +104,7 @@ public class SpellChecker {
         return copiedDict.contains(word);
     }
 
-    public static void prompt (ArrayList<String> list) {
+    private static void prompt (ArrayList<String> list) {
         int len = list.size();
         if (len > 0) {
             System.out.printf(Util.FOLLOWING_SUGGESTIONS);
@@ -116,7 +117,7 @@ public class SpellChecker {
         }
     }
 
-    public static void modifyWord (String word, ArrayList<String> wordSuggest) {
+    private static void modifyWord (String word, ArrayList<String> wordSuggest) {
         String userInputKey = scnr.next();
         if (userInputKey.equals("r")) {
             System.out.printf(Util.AUTOMATIC_REPLACEMENT_PROMPT);
@@ -141,5 +142,13 @@ public class SpellChecker {
         } else {
             System.out.printf(Util.INVALID_RESPONSE);
         }
+    }
+
+    public static void setDictFile(FileInputStream name) {
+        userDict = name;
+    }
+
+    public static ArrayList<String> getDict() {
+        return copiedDict;
     }
 }
