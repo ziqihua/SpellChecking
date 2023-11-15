@@ -23,9 +23,9 @@ public class WordRecommenderTest {
     @Test
     public void testSimilarity() {
         double actual = w1.getSimilarity("committe","comet");
-        assertEquals(actual,5.0/6.0, 0.001);
+        assertEquals(actual,5.0/6.0, this.delta);
         actual = w1.getSimilarity("co","bd");
-        assertEquals(actual,0, delta);
+        assertEquals(actual,0, this.delta);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class WordRecommenderTest {
 
     @Test
     public void testLeftRight() {
-        assertEquals(w1.getLeftRight("aghast","gross"),1.5,delta);
+        assertEquals(w1.getLeftRight("aghast","gross"),1.5,this.delta);
     }
 
     @Test
