@@ -77,7 +77,7 @@ public class WordRecommenderTest {
 
     @Test
     public void testLeftRight() {
-        assertEquals(w1.getLeftRight("aghast","gross"),1.5,this.delta);
+        assertEquals(2.5, w1.getLeftRight("extrapolated","extraordinary"), this.delta);
     }
 
     @Test
